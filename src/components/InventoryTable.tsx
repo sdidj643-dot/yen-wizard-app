@@ -4,6 +4,8 @@ import { InventoryItem, Settings } from '@/types/inventory';
 import { cn } from '@/lib/utils';
 import { exportInventoryToExcel } from '@/lib/exportUtils';
 import { compressImage } from '@/lib/imageUtils';
+import { AddInventoryDialog } from './AddInventoryDialog';
+import { Button } from '@/components/ui/button';
 
 interface InventoryTableProps {
   items: InventoryItem[];
@@ -14,15 +16,6 @@ interface InventoryTableProps {
   onDeleteItem: (id: string) => void;
 }
 
-const emptyItem = {
-  photo: '',
-  productName: '',
-  color: '',
-  size: '',
-  quantity: 1,
-  costPriceCNY: 0,
-};
-
 export function InventoryTable({
   items,
   settings,
@@ -31,20 +24,12 @@ export function InventoryTable({
   onUpdateItem,
   onDeleteItem,
 }: InventoryTableProps) {
-  const [newItem, setNewItem] = useState(emptyItem);
   const [editingId, setEditingId] = useState<string | null>(null);
-
-  const handleAddItem = () => {
-    if (newItem.productName.trim() && newItem.costPriceCNY > 0) {
-      onAddItem(newItem);
-      setNewItem(emptyItem);
-    }
-  };
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
   const handleImageUpload = async (
     e: React.ChangeEvent<HTMLInputElement>,
-    isNew: boolean,
-    itemId?: string
+    itemId: string
   ) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -53,11 +38,7 @@ export function InventoryTable({
         const base64 = reader.result as string;
         // Compress image to save storage space
         const compressed = await compressImage(base64, 200, 0.6);
-        if (isNew) {
-          setNewItem(prev => ({ ...prev, photo: compressed }));
-        } else if (itemId) {
-          onUpdateItem(itemId, { photo: compressed });
-        }
+        onUpdateItem(itemId, { photo: compressed });
       };
       reader.readAsDataURL(file);
     }
@@ -84,25 +65,31 @@ export function InventoryTable({
           </p>
         </div>
         <div className="flex items-center gap-4">
-          <button
+          <Button onClick={() => setIsAddDialogOpen(true)}>
+            <Plus className="w-4 h-4 mr-2" />
+            新增庫存
+          </Button>
+          <Button
+            variant="outline"
             onClick={handleExport}
             disabled={items.length === 0}
-            className={cn(
-              "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors",
-              items.length > 0
-                ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                : "bg-muted text-muted-foreground cursor-not-allowed"
-            )}
           >
-            <Download className="w-4 h-4" />
+            <Download className="w-4 h-4 mr-2" />
             匯出 Excel
-          </button>
+          </Button>
           <div className="text-right text-sm text-muted-foreground">
             <p>匯率: 1 CNY = {settings.exchangeRate} JPY</p>
             <p>目標利潤: ¥{settings.targetProfit.toLocaleString()}</p>
           </div>
         </div>
       </div>
+
+      <AddInventoryDialog
+        open={isAddDialogOpen}
+        onOpenChange={setIsAddDialogOpen}
+        settings={settings}
+        onAddItem={onAddItem}
+      />
 
       <div className="table-container overflow-x-auto">
         <table className="w-full min-w-[900px]">
@@ -119,94 +106,6 @@ export function InventoryTable({
             </tr>
           </thead>
           <tbody>
-            {/* New Item Row */}
-            <tr className="bg-primary/5">
-              <td className="table-cell">
-                <label className="w-14 h-14 rounded-lg border-2 border-dashed border-primary/40 flex items-center justify-center cursor-pointer hover:border-primary transition-colors overflow-hidden">
-                  {newItem.photo ? (
-                    <img src={newItem.photo} alt="" className="w-full h-full object-cover" />
-                  ) : (
-                    <ImagePlus className="w-5 h-5 text-primary/60" />
-                  )}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => handleImageUpload(e, true)}
-                  />
-                </label>
-              </td>
-              <td className="table-cell">
-                <input
-                  type="text"
-                  value={newItem.productName}
-                  onChange={(e) => setNewItem(prev => ({ ...prev, productName: e.target.value }))}
-                  placeholder="商品名稱を入力"
-                  className="input-field w-full"
-                />
-              </td>
-              <td className="table-cell">
-                <input
-                  type="text"
-                  value={newItem.color}
-                  onChange={(e) => setNewItem(prev => ({ ...prev, color: e.target.value }))}
-                  placeholder="顏色"
-                  className="input-field w-full"
-                />
-              </td>
-              <td className="table-cell">
-                <input
-                  type="text"
-                  value={newItem.size}
-                  onChange={(e) => setNewItem(prev => ({ ...prev, size: e.target.value }))}
-                  placeholder="尺寸"
-                  className="input-field w-full"
-                />
-              </td>
-              <td className="table-cell">
-                <input
-                  type="number"
-                  value={newItem.quantity}
-                  onChange={(e) => setNewItem(prev => ({ ...prev, quantity: parseInt(e.target.value) || 0 }))}
-                  min="0"
-                  className="input-field w-full text-center"
-                />
-              </td>
-              <td className="table-cell">
-                <input
-                  type="number"
-                  value={newItem.costPriceCNY || ''}
-                  onChange={(e) => setNewItem(prev => ({ ...prev, costPriceCNY: parseFloat(e.target.value) || 0 }))}
-                  placeholder="0"
-                  min="0"
-                  step="0.01"
-                  className="input-field w-full text-right"
-                />
-              </td>
-              <td className="table-cell text-right text-muted-foreground">
-                {newItem.costPriceCNY > 0 ? (
-                  <span className="font-medium text-foreground">
-                    自動計算
-                  </span>
-                ) : '—'}
-              </td>
-              <td className="table-cell">
-                <button
-                  onClick={handleAddItem}
-                  disabled={!newItem.productName.trim() || newItem.costPriceCNY <= 0}
-                  className={cn(
-                    "p-2 rounded-lg transition-colors",
-                    newItem.productName.trim() && newItem.costPriceCNY > 0
-                      ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                      : "bg-muted text-muted-foreground cursor-not-allowed"
-                  )}
-                >
-                  <Plus className="w-4 h-4" />
-                </button>
-              </td>
-            </tr>
-
-            {/* Existing Items */}
             {items.map((item) => (
               <tr key={item.id} className="table-row-interactive">
                 <td className="table-cell">
@@ -220,7 +119,7 @@ export function InventoryTable({
                       type="file"
                       accept="image/*"
                       className="hidden"
-                      onChange={(e) => handleImageUpload(e, false, item.id)}
+                      onChange={(e) => handleImageUpload(e, item.id)}
                     />
                   </label>
                 </td>
