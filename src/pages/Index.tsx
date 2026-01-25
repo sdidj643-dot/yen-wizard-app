@@ -3,8 +3,8 @@ import { Sidebar } from '@/components/Sidebar';
 import { InventoryTable } from '@/components/InventoryTable';
 import { OrderTable } from '@/components/OrderTable';
 import { SettingsPanel } from '@/components/SettingsPanel';
-import { useCloudStore } from '@/hooks/useCloudStore';
-import { Loader2, Cloud } from 'lucide-react';
+import { useStore } from '@/hooks/useStore';
+import { Loader2 } from 'lucide-react';
 
 type Tab = 'inventory' | 'orders' | 'settings';
 
@@ -28,14 +28,14 @@ const Index = () => {
     deleteOrderItem,
     updateSettings,
     recalculateAllPrices,
-  } = useCloudStore();
+  } = useStore();
 
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
-          <p className="text-muted-foreground">クラウドからデータを読み込み中...</p>
+          <p className="text-muted-foreground">読み込み中...</p>
         </div>
       </div>
     );
@@ -60,8 +60,7 @@ const Index = () => {
           {activeStore && (
             <div className="mb-6">
               <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-                <Cloud className="w-4 h-4" />
-                <span>クラウド同期中 · 現在の店舗</span>
+                <span>現在の店舗</span>
               </div>
               <h1 className="text-3xl font-bold text-foreground">{activeStore.name}</h1>
             </div>
