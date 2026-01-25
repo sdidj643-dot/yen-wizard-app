@@ -4,12 +4,15 @@ import { InventoryTable } from '@/components/InventoryTable';
 import { OrderTable } from '@/components/OrderTable';
 import { SettingsPanel } from '@/components/SettingsPanel';
 import { useCloudStore } from '@/hooks/useCloudStore';
-import { Loader2, Cloud } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { Loader2, Cloud, LogOut } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 type Tab = 'inventory' | 'orders' | 'settings';
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState<Tab>('inventory');
+  const { user, role, signOut } = useAuth();
   const {
     stores,
     activeStore,
@@ -56,16 +59,35 @@ const Index = () => {
 
       <main className="flex-1 overflow-y-auto">
         <div className="p-8">
-          {/* Store Header */}
-          {activeStore && (
-            <div className="mb-6">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-                <Cloud className="w-4 h-4" />
-                <span>クラウド同期中 · 現在の店舗</span>
+          {/* Header with user info */}
+          <div className="flex justify-between items-start mb-6">
+            {/* Store Header */}
+            {activeStore && (
+              <div>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+                  <Cloud className="w-4 h-4" />
+                  <span>クラウド同期中 · 現在の店舗</span>
+                </div>
+                <h1 className="text-3xl font-bold text-foreground">{activeStore.name}</h1>
               </div>
-              <h1 className="text-3xl font-bold text-foreground">{activeStore.name}</h1>
+            )}
+            
+            {/* User info */}
+            <div className="flex items-center gap-3">
+              <div className="text-right">
+                <p className="text-sm font-medium">{user?.email}</p>
+                <p className="text-xs text-muted-foreground">
+                  {role === 'admin' && '管理者'}
+                  {role === 'owner' && 'オーナー'}
+                  {role === 'employee' && '従業員'}
+                </p>
+              </div>
+              <Button variant="outline" size="sm" onClick={signOut}>
+                <LogOut className="w-4 h-4 mr-1" />
+                ログアウト
+              </Button>
             </div>
-          )}
+          </div>
 
           {/* Tab Content */}
           {activeTab === 'inventory' && activeStore && (
@@ -95,6 +117,7 @@ const Index = () => {
               settings={settings}
               onUpdateSettings={updateSettings}
               onRecalculateAll={recalculateAllPrices}
+              userRole={role}
             />
           )}
         </div>
