@@ -71,6 +71,7 @@ const Index = () => {
             <InventoryTable
               items={activeStore.inventory}
               settings={settings}
+              storeName={activeStore.name}
               onAddItem={addInventoryItem}
               onUpdateItem={updateInventoryItem}
               onDeleteItem={deleteInventoryItem}
@@ -81,6 +82,7 @@ const Index = () => {
             <OrderTable
               items={activeStore.orders}
               settings={settings}
+              storeName={activeStore.name}
               onAddItem={addOrderItem}
               onUpdateItem={updateOrderItem}
               onDeleteItem={deleteOrderItem}

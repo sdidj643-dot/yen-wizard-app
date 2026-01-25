@@ -1,11 +1,13 @@
 import { useState } from 'react';
-import { Plus, Trash2, ImagePlus, Edit2 } from 'lucide-react';
+import { Plus, Trash2, ImagePlus, Download } from 'lucide-react';
 import { InventoryItem, Settings } from '@/types/inventory';
 import { cn } from '@/lib/utils';
+import { exportInventoryToCSV } from '@/lib/exportUtils';
 
 interface InventoryTableProps {
   items: InventoryItem[];
   settings: Settings;
+  storeName: string;
   onAddItem: (item: Omit<InventoryItem, 'id' | 'sellingPriceJPY'>) => void;
   onUpdateItem: (id: string, updates: Partial<InventoryItem>) => void;
   onDeleteItem: (id: string) => void;
@@ -23,6 +25,7 @@ const emptyItem = {
 export function InventoryTable({
   items,
   settings,
+  storeName,
   onAddItem,
   onUpdateItem,
   onDeleteItem,
@@ -64,6 +67,10 @@ export function InventoryTable({
     return `¥${amount.toLocaleString()}`;
   };
 
+  const handleExport = () => {
+    exportInventoryToCSV(items, settings, storeName);
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -73,9 +80,24 @@ export function InventoryTable({
             商品の在庫を管理します。人民幣で原価を入力すると自動で販売価格が計算されます。
           </p>
         </div>
-        <div className="text-right text-sm text-muted-foreground">
-          <p>匯率: 1 CNY = {settings.exchangeRate} JPY</p>
-          <p>目標利潤: ¥{settings.targetProfit.toLocaleString()}</p>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={handleExport}
+            disabled={items.length === 0}
+            className={cn(
+              "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors",
+              items.length > 0
+                ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                : "bg-muted text-muted-foreground cursor-not-allowed"
+            )}
+          >
+            <Download className="w-4 h-4" />
+            匯出 CSV
+          </button>
+          <div className="text-right text-sm text-muted-foreground">
+            <p>匯率: 1 CNY = {settings.exchangeRate} JPY</p>
+            <p>目標利潤: ¥{settings.targetProfit.toLocaleString()}</p>
+          </div>
         </div>
       </div>
 

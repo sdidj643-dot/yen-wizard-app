@@ -1,11 +1,13 @@
 import { useState } from 'react';
-import { Plus, Trash2, ImagePlus, TrendingUp, TrendingDown } from 'lucide-react';
+import { Plus, Trash2, ImagePlus, TrendingUp, TrendingDown, Download } from 'lucide-react';
 import { OrderItem, Settings } from '@/types/inventory';
 import { cn } from '@/lib/utils';
+import { exportOrdersToCSV } from '@/lib/exportUtils';
 
 interface OrderTableProps {
   items: OrderItem[];
   settings: Settings;
+  storeName: string;
   onAddItem: (item: Omit<OrderItem, 'id' | 'convertedWithShipping' | 'profit' | 'createdAt'>) => void;
   onUpdateItem: (id: string, updates: Partial<OrderItem>) => void;
   onDeleteItem: (id: string) => void;
@@ -23,6 +25,7 @@ const emptyItem = {
 export function OrderTable({
   items,
   settings,
+  storeName,
   onAddItem,
   onUpdateItem,
   onDeleteItem,
@@ -60,6 +63,10 @@ export function OrderTable({
   const totalRevenue = items.reduce((sum, i) => sum + i.actualPayment, 0);
   const totalCost = items.reduce((sum, i) => sum + i.convertedWithShipping, 0);
 
+  const handleExport = () => {
+    exportOrdersToCSV(items, storeName);
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -69,9 +76,24 @@ export function OrderTable({
             販売した商品を記録し、利益を自動計算します。
           </p>
         </div>
-        <div className="text-right text-sm text-muted-foreground">
-          <p>匯率: 1 CNY = {settings.exchangeRate} JPY</p>
-          <p>運費込み計算: +¥1,000</p>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={handleExport}
+            disabled={items.length === 0}
+            className={cn(
+              "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors",
+              items.length > 0
+                ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                : "bg-muted text-muted-foreground cursor-not-allowed"
+            )}
+          >
+            <Download className="w-4 h-4" />
+            匯出 CSV
+          </button>
+          <div className="text-right text-sm text-muted-foreground">
+            <p>匯率: 1 CNY = {settings.exchangeRate} JPY</p>
+            <p>運費込み計算: +¥1,000</p>
+          </div>
         </div>
       </div>
 
