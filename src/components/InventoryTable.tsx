@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Plus, Trash2, ImagePlus, Download } from 'lucide-react';
 import { InventoryItem, Settings } from '@/types/inventory';
 import { cn } from '@/lib/utils';
-import { exportInventoryToCSV } from '@/lib/exportUtils';
+import { exportInventoryToExcel } from '@/lib/exportUtils';
 import { compressImage } from '@/lib/imageUtils';
 
 interface InventoryTableProps {
@@ -70,8 +70,8 @@ export function InventoryTable({
     return `¥${amount.toLocaleString()}`;
   };
 
-  const handleExport = () => {
-    exportInventoryToCSV(items, settings, storeName);
+  const handleExport = async () => {
+    await exportInventoryToExcel(items, settings, storeName);
   };
 
   return (
@@ -95,7 +95,7 @@ export function InventoryTable({
             )}
           >
             <Download className="w-4 h-4" />
-            匯出 CSV
+            匯出 Excel
           </button>
           <div className="text-right text-sm text-muted-foreground">
             <p>匯率: 1 CNY = {settings.exchangeRate} JPY</p>
