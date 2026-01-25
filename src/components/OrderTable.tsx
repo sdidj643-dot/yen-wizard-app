@@ -18,7 +18,7 @@ interface OrderTableProps {
   items: OrderItem[];
   settings: Settings;
   storeName: string;
-  onAddItem: (item: Omit<OrderItem, 'id' | 'convertedWithShipping' | 'profit' | 'createdAt'>) => void;
+  onAddItem: (item: Omit<OrderItem, 'id' | 'convertedWithShipping' | 'profit'>, createdAt?: string) => void;
   onUpdateItem: (id: string, updates: Partial<OrderItem>) => void;
   onDeleteItem: (id: string) => void;
 }
@@ -31,6 +31,7 @@ const emptyItem = {
   costPriceCNY: 0,
   actualPayment: 0,
   completedAt: '',
+  createdAt: '',
 };
 
 const months = [
@@ -64,10 +65,16 @@ export function OrderTable({
 
   const handleAddItem = () => {
     if (newItem.productName.trim() && newItem.costPriceCNY > 0) {
+      // Use selected month/year for the order date if not specified
+      const orderDate = newItem.createdAt 
+        ? newItem.createdAt 
+        : new Date(selectedYear, selectedMonth - 1, 15).toISOString();
+      
       onAddItem({
         ...newItem,
-        completedAt: newItem.completedAt || new Date().toISOString(),
-      });
+        completedAt: newItem.completedAt || orderDate,
+        createdAt: orderDate,
+      }, orderDate);
       setNewItem(emptyItem);
     }
   };
