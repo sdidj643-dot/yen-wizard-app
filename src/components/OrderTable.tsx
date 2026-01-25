@@ -6,6 +6,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { exportOrdersToCSV } from '@/lib/exportUtils';
+import { AddOrderDialog } from './AddOrderDialog';
 import {
   Select,
   SelectContent,
@@ -22,17 +23,6 @@ interface OrderTableProps {
   onUpdateItem: (id: string, updates: Partial<OrderItem>) => void;
   onDeleteItem: (id: string) => void;
 }
-
-const emptyItem = {
-  photo: '',
-  productName: '',
-  color: '',
-  size: '',
-  costPriceCNY: 0,
-  actualPayment: 0,
-  completedAt: '',
-  createdAt: '',
-};
 
 const months = [
   { value: '1', label: '1月' },
@@ -60,40 +50,18 @@ export function OrderTable({
   const now = new Date();
   const [selectedYear, setSelectedYear] = useState(now.getFullYear());
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth() + 1);
-  
-  const [newItem, setNewItem] = useState(emptyItem);
-
-  const handleAddItem = () => {
-    if (newItem.productName.trim() && newItem.costPriceCNY > 0) {
-      // Use selected month/year for the order date if not specified
-      const orderDate = newItem.createdAt 
-        ? newItem.createdAt 
-        : new Date(selectedYear, selectedMonth - 1, 15).toISOString();
-      
-      onAddItem({
-        ...newItem,
-        completedAt: newItem.completedAt || orderDate,
-        createdAt: orderDate,
-      }, orderDate);
-      setNewItem(emptyItem);
-    }
-  };
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
   const handleImageUpload = (
     e: React.ChangeEvent<HTMLInputElement>,
-    isNew: boolean,
-    itemId?: string
+    itemId: string
   ) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
         const base64 = reader.result as string;
-        if (isNew) {
-          setNewItem(prev => ({ ...prev, photo: base64 }));
-        } else if (itemId) {
-          onUpdateItem(itemId, { photo: base64 });
-        }
+        onUpdateItem(itemId, { photo: base64 });
       };
       reader.readAsDataURL(file);
     }
@@ -157,12 +125,19 @@ export function OrderTable({
         </div>
         <div className="flex items-center gap-4">
           <button
+            onClick={() => setIsAddDialogOpen(true)}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            新增訂單
+          </button>
+          <button
             onClick={handleExport}
             disabled={filteredItems.length === 0}
             className={cn(
               "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors",
               filteredItems.length > 0
-                ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                ? "bg-secondary text-secondary-foreground hover:bg-secondary/80"
                 : "bg-muted text-muted-foreground cursor-not-allowed"
             )}
           >
@@ -175,6 +150,16 @@ export function OrderTable({
           </div>
         </div>
       </div>
+
+      {/* Add Order Dialog */}
+      <AddOrderDialog
+        open={isAddDialogOpen}
+        onOpenChange={setIsAddDialogOpen}
+        settings={settings}
+        selectedYear={selectedYear}
+        selectedMonth={selectedMonth}
+        onAddItem={onAddItem}
+      />
 
       {/* Month/Year Selector */}
       <div className="flex items-center gap-3 p-4 bg-card rounded-xl border border-border">
@@ -243,131 +228,6 @@ export function OrderTable({
             </tr>
           </thead>
           <tbody>
-            {/* New Item Row */}
-            <tr className="bg-primary/5">
-              <td className="table-cell">
-                <label className="w-14 h-14 rounded-lg border-2 border-dashed border-primary/40 flex items-center justify-center cursor-pointer hover:border-primary transition-colors overflow-hidden">
-                  {newItem.photo ? (
-                    <img src={newItem.photo} alt="" className="w-full h-full object-cover" />
-                  ) : (
-                    <ImagePlus className="w-5 h-5 text-primary/60" />
-                  )}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => handleImageUpload(e, true)}
-                  />
-                </label>
-              </td>
-              <td className="table-cell">
-                <input
-                  type="text"
-                  value={newItem.productName}
-                  onChange={(e) => setNewItem(prev => ({ ...prev, productName: e.target.value }))}
-                  placeholder="商品名稱を入力"
-                  className="input-field w-full"
-                />
-              </td>
-              <td className="table-cell">
-                <input
-                  type="text"
-                  value={newItem.color}
-                  onChange={(e) => setNewItem(prev => ({ ...prev, color: e.target.value }))}
-                  placeholder="顏色"
-                  className="input-field w-full"
-                />
-              </td>
-              <td className="table-cell">
-                <input
-                  type="text"
-                  value={newItem.size}
-                  onChange={(e) => setNewItem(prev => ({ ...prev, size: e.target.value }))}
-                  placeholder="尺寸"
-                  className="input-field w-full"
-                />
-              </td>
-              <td className="table-cell">
-                <input
-                  type="number"
-                  value={newItem.costPriceCNY || ''}
-                  onChange={(e) => setNewItem(prev => ({ ...prev, costPriceCNY: parseFloat(e.target.value) || 0 }))}
-                  placeholder="0"
-                  min="0"
-                  step="0.01"
-                  className="input-field w-full text-right"
-                />
-              </td>
-              <td className="table-cell text-right text-muted-foreground">
-                {newItem.costPriceCNY > 0 ? (
-                  <span className="font-medium text-foreground">
-                    ¥{Math.ceil(newItem.costPriceCNY * settings.exchangeRate + 1000).toLocaleString()}
-                  </span>
-                ) : '—'}
-              </td>
-              <td className="table-cell">
-                <input
-                  type="number"
-                  value={newItem.actualPayment || ''}
-                  onChange={(e) => setNewItem(prev => ({ ...prev, actualPayment: parseInt(e.target.value) || 0 }))}
-                  placeholder="0"
-                  min="0"
-                  className="input-field w-full text-right"
-                />
-              </td>
-              <td className="table-cell text-right text-muted-foreground">
-                {newItem.actualPayment > 0 && newItem.costPriceCNY > 0 ? (
-                  <span className={cn(
-                    "font-semibold",
-                    newItem.actualPayment - Math.ceil(newItem.costPriceCNY * settings.exchangeRate + 1000) >= 0
-                      ? "profit-positive"
-                      : "profit-negative"
-                  )}>
-                    ¥{(newItem.actualPayment - Math.ceil(newItem.costPriceCNY * settings.exchangeRate + 1000)).toLocaleString()}
-                  </span>
-                ) : '—'}
-              </td>
-              <td className="table-cell">
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <button
-                      className={cn(
-                        "flex items-center gap-2 px-3 py-2 rounded-lg border border-border text-sm hover:bg-muted transition-colors w-full",
-                        !newItem.completedAt && "text-muted-foreground"
-                      )}
-                    >
-                      <CalendarIcon className="w-4 h-4" />
-                      {newItem.completedAt ? format(new Date(newItem.completedAt), 'yyyy/MM/dd') : '選擇日期'}
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={newItem.completedAt ? new Date(newItem.completedAt) : undefined}
-                      onSelect={(date) => setNewItem(prev => ({ ...prev, completedAt: date?.toISOString() || '' }))}
-                      initialFocus
-                      className="p-3 pointer-events-auto"
-                    />
-                  </PopoverContent>
-                </Popover>
-              </td>
-              <td className="table-cell">
-                <button
-                  onClick={handleAddItem}
-                  disabled={!newItem.productName.trim() || newItem.costPriceCNY <= 0}
-                  className={cn(
-                    "p-2 rounded-lg transition-colors",
-                    newItem.productName.trim() && newItem.costPriceCNY > 0
-                      ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                      : "bg-muted text-muted-foreground cursor-not-allowed"
-                  )}
-                >
-                  <Plus className="w-4 h-4" />
-                </button>
-              </td>
-            </tr>
-
-            {/* Existing Items */}
             {filteredItems.map((item) => (
               <tr key={item.id} className="table-row-interactive">
                 <td className="table-cell">
@@ -381,7 +241,7 @@ export function OrderTable({
                       type="file"
                       accept="image/*"
                       className="hidden"
-                      onChange={(e) => handleImageUpload(e, false, item.id)}
+                      onChange={(e) => handleImageUpload(e, item.id)}
                     />
                   </label>
                 </td>
