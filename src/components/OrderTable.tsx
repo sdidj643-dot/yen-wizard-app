@@ -1,6 +1,9 @@
 import { useState, useMemo } from 'react';
-import { Plus, Trash2, ImagePlus, TrendingUp, TrendingDown, Download, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Trash2, ImagePlus, TrendingUp, TrendingDown, Download, ChevronLeft, ChevronRight, CalendarIcon } from 'lucide-react';
+import { format } from 'date-fns';
 import { OrderItem, Settings } from '@/types/inventory';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { exportOrdersToCSV } from '@/lib/exportUtils';
 import {
@@ -27,6 +30,7 @@ const emptyItem = {
   size: '',
   costPriceCNY: 0,
   actualPayment: 0,
+  completedAt: '',
 };
 
 const months = [
@@ -60,7 +64,10 @@ export function OrderTable({
 
   const handleAddItem = () => {
     if (newItem.productName.trim() && newItem.costPriceCNY > 0) {
-      onAddItem(newItem);
+      onAddItem({
+        ...newItem,
+        completedAt: newItem.completedAt || new Date().toISOString(),
+      });
       setNewItem(emptyItem);
     }
   };
@@ -224,6 +231,7 @@ export function OrderTable({
               <th className="table-header-cell w-32 text-right">換算+運費</th>
               <th className="table-header-cell w-28 text-right">實際入帳</th>
               <th className="table-header-cell w-28 text-right">利潤</th>
+              <th className="table-header-cell w-32">完成日期</th>
               <th className="table-header-cell w-20"></th>
             </tr>
           </thead>
@@ -313,6 +321,30 @@ export function OrderTable({
                 ) : '—'}
               </td>
               <td className="table-cell">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button
+                      className={cn(
+                        "flex items-center gap-2 px-3 py-2 rounded-lg border border-border text-sm hover:bg-muted transition-colors w-full",
+                        !newItem.completedAt && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="w-4 h-4" />
+                      {newItem.completedAt ? format(new Date(newItem.completedAt), 'yyyy/MM/dd') : '選擇日期'}
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={newItem.completedAt ? new Date(newItem.completedAt) : undefined}
+                      onSelect={(date) => setNewItem(prev => ({ ...prev, completedAt: date?.toISOString() || '' }))}
+                      initialFocus
+                      className="p-3 pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </td>
+              <td className="table-cell">
                 <button
                   onClick={handleAddItem}
                   disabled={!newItem.productName.trim() || newItem.costPriceCNY <= 0}
@@ -385,6 +417,27 @@ export function OrderTable({
                   </span>
                 </td>
                 <td className="table-cell">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <button
+                        className="flex items-center gap-2 px-3 py-2 rounded-lg border border-border text-sm hover:bg-muted transition-colors w-full"
+                      >
+                        <CalendarIcon className="w-4 h-4" />
+                        {item.completedAt ? format(new Date(item.completedAt), 'yyyy/MM/dd') : '選擇日期'}
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={item.completedAt ? new Date(item.completedAt) : undefined}
+                        onSelect={(date) => onUpdateItem(item.id, { completedAt: date?.toISOString() || '' })}
+                        initialFocus
+                        className="p-3 pointer-events-auto"
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </td>
+                <td className="table-cell">
                   <button
                     onClick={() => onDeleteItem(item.id)}
                     className="p-2 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
@@ -397,7 +450,7 @@ export function OrderTable({
 
             {filteredItems.length === 0 && (
               <tr>
-                <td colSpan={9} className="table-cell text-center py-12 text-muted-foreground">
+                <td colSpan={10} className="table-cell text-center py-12 text-muted-foreground">
                   {selectedYear}年{selectedMonth}月 沒有訂單記錄。
                 </td>
               </tr>

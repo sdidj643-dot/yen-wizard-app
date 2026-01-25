@@ -20,6 +20,7 @@ export interface OrderItem {
   actualPayment: number;
   profit: number;
   createdAt: string;
+  completedAt: string;
 }
 
 export interface Store {

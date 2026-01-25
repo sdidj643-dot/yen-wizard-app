@@ -142,12 +142,14 @@ export function useStore() {
   const addOrderItem = useCallback((item: Omit<OrderItem, 'id' | 'convertedWithShipping' | 'profit' | 'createdAt'>) => {
     const convertedWithShipping = calculateConvertedWithShipping(item.costPriceCNY, settings.exchangeRate);
     const profit = calculateProfit(item.actualPayment, convertedWithShipping);
+    const now = new Date().toISOString();
     const newItem: OrderItem = {
       ...item,
       id: generateId(),
       convertedWithShipping,
       profit,
-      createdAt: new Date().toISOString(),
+      createdAt: now,
+      completedAt: item.completedAt || now,
     };
     setStores(prev => prev.map(s => 
       s.id === activeStoreId 
