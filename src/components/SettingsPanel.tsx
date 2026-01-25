@@ -1,16 +1,21 @@
 import { Settings } from '@/types/inventory';
 import { Calculator, RefreshCw } from 'lucide-react';
+import { UserManagement } from './UserManagement';
+
+type AppRole = 'admin' | 'owner' | 'employee';
 
 interface SettingsPanelProps {
   settings: Settings;
   onUpdateSettings: (settings: Partial<Settings>) => void;
   onRecalculateAll: () => void;
+  userRole?: AppRole | null;
 }
 
 export function SettingsPanel({
   settings,
   onUpdateSettings,
   onRecalculateAll,
+  userRole,
 }: SettingsPanelProps) {
   const handleChange = (key: keyof Settings, value: number) => {
     onUpdateSettings({ [key]: value });
@@ -204,6 +209,11 @@ export function SettingsPanel({
           </div>
         </div>
       </div>
+
+      {/* User Management - only for admin/owner */}
+      {(userRole === 'admin' || userRole === 'owner') && (
+        <UserManagement />
+      )}
     </div>
   );
 }
