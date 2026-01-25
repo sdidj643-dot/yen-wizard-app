@@ -5,7 +5,7 @@ import { OrderItem, Settings } from '@/types/inventory';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { exportOrdersToCSV } from '@/lib/exportUtils';
+import { exportOrdersToExcel } from '@/lib/exportUtils';
 import { AddOrderDialog } from './AddOrderDialog';
 import { compressImage } from '@/lib/imageUtils';
 import {
@@ -95,8 +95,8 @@ export function OrderTable({
   const totalRevenue = filteredItems.reduce((sum, i) => sum + i.actualPayment, 0);
   const totalCost = filteredItems.reduce((sum, i) => sum + i.convertedWithShipping, 0);
 
-  const handleExport = () => {
-    exportOrdersToCSV(filteredItems, `${storeName}_${selectedYear}年${selectedMonth}月`);
+  const handleExport = async () => {
+    await exportOrdersToExcel(filteredItems, `${storeName}_${selectedYear}年${selectedMonth}月`);
   };
 
   const handlePrevMonth = () => {
@@ -145,7 +145,7 @@ export function OrderTable({
             )}
           >
             <Download className="w-4 h-4" />
-            匯出 CSV
+            匯出 Excel
           </button>
           <div className="text-right text-sm text-muted-foreground">
             <p>匯率: 1 CNY = {settings.exchangeRate} JPY</p>
