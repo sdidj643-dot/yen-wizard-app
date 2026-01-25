@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { ImagePlus } from 'lucide-react';
+import { ImagePlus, X } from 'lucide-react';
 import { Settings, calculateSellingPrice } from '@/types/inventory';
 import { compressImage } from '@/lib/imageUtils';
 import { cn } from '@/lib/utils';
+import { ImagePreviewDialog } from './ImagePreviewDialog';
 import {
   Dialog,
   DialogContent,
@@ -46,6 +47,7 @@ export function AddInventoryDialog({
 }: AddInventoryDialogProps) {
   const [newItem, setNewItem] = useState(emptyItem);
   const [isDragging, setIsDragging] = useState(false);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   const processFile = async (file: File) => {
     if (file && file.type.startsWith('image/')) {
@@ -114,29 +116,52 @@ export function AddInventoryDialog({
           {/* Photo Upload */}
           <div className="flex flex-col gap-2">
             <Label>商品照片（可拖曳上傳）</Label>
-            <label 
-              className={cn(
-                "w-24 h-24 rounded-lg border-2 border-dashed flex items-center justify-center cursor-pointer transition-colors overflow-hidden",
-                isDragging 
-                  ? "border-primary bg-primary/10" 
-                  : "border-primary/40 hover:border-primary"
-              )}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-            >
-              {newItem.photo ? (
-                <img src={newItem.photo} alt="" className="w-full h-full object-cover" />
-              ) : (
+            {newItem.photo ? (
+              <div className="relative w-24 h-24 group">
+                <img 
+                  src={newItem.photo} 
+                  alt="" 
+                  className="w-full h-full object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
+                  onClick={() => setIsPreviewOpen(true)}
+                />
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setNewItem(prev => ({ ...prev, photo: '' }));
+                  }}
+                  className="absolute -top-2 -right-2 p-1 bg-destructive text-destructive-foreground rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            ) : (
+              <label 
+                className={cn(
+                  "w-24 h-24 rounded-lg border-2 border-dashed flex items-center justify-center cursor-pointer transition-colors overflow-hidden",
+                  isDragging 
+                    ? "border-primary bg-primary/10" 
+                    : "border-primary/40 hover:border-primary"
+                )}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+              >
                 <ImagePlus className="w-8 h-8 text-primary/60" />
-              )}
-              <input
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleImageUpload}
-              />
-            </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleImageUpload}
+                />
+              </label>
+            )}
+            <ImagePreviewDialog
+              open={isPreviewOpen}
+              onOpenChange={setIsPreviewOpen}
+              imageSrc={newItem.photo}
+              onDelete={() => setNewItem(prev => ({ ...prev, photo: '' }))}
+            />
           </div>
 
           {/* Product Name */}
