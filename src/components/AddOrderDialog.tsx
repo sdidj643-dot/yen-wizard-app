@@ -5,12 +5,14 @@ import { Settings } from '@/types/inventory';
 import { cn } from '@/lib/utils';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { compressImage } from '@/lib/imageUtils';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogDescription,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -55,13 +57,15 @@ export function AddOrderDialog({
 }: AddOrderDialogProps) {
   const [newItem, setNewItem] = useState(emptyItem);
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onloadend = () => {
+      reader.onloadend = async () => {
         const base64 = reader.result as string;
-        setNewItem(prev => ({ ...prev, photo: base64 }));
+        // Compress image to save storage space
+        const compressed = await compressImage(base64, 200, 0.6);
+        setNewItem(prev => ({ ...prev, photo: compressed }));
       };
       reader.readAsDataURL(file);
     }
@@ -102,6 +106,7 @@ export function AddOrderDialog({
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>新增訂單</DialogTitle>
+          <DialogDescription>填寫商品資訊後點擊確定新增</DialogDescription>
         </DialogHeader>
         
         <div className="grid gap-4 py-4">

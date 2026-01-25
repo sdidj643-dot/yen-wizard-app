@@ -61,16 +61,25 @@ export function useStore() {
     setIsLoading(false);
   }, []);
 
-  // Save data to localStorage
+  // Save data to localStorage with error handling
   useEffect(() => {
     if (!isLoading) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ stores, activeStoreId }));
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({ stores, activeStoreId }));
+      } catch (e) {
+        console.error('Failed to save data to localStorage. Storage may be full.', e);
+        // Could add a toast notification here to inform the user
+      }
     }
   }, [stores, activeStoreId, isLoading]);
 
   useEffect(() => {
     if (!isLoading) {
-      localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+      try {
+        localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+      } catch (e) {
+        console.error('Failed to save settings to localStorage.', e);
+      }
     }
   }, [settings, isLoading]);
 
