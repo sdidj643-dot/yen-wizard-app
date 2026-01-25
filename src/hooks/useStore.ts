@@ -139,17 +139,17 @@ export function useStore() {
     ));
   }, [activeStoreId]);
 
-  const addOrderItem = useCallback((item: Omit<OrderItem, 'id' | 'convertedWithShipping' | 'profit' | 'createdAt'>) => {
+  const addOrderItem = useCallback((item: Omit<OrderItem, 'id' | 'convertedWithShipping' | 'profit'>, createdAt?: string) => {
     const convertedWithShipping = calculateConvertedWithShipping(item.costPriceCNY, settings.exchangeRate);
     const profit = calculateProfit(item.actualPayment, convertedWithShipping);
-    const now = new Date().toISOString();
+    const orderDate = createdAt || item.createdAt || new Date().toISOString();
     const newItem: OrderItem = {
       ...item,
       id: generateId(),
       convertedWithShipping,
       profit,
-      createdAt: now,
-      completedAt: item.completedAt || now,
+      createdAt: orderDate,
+      completedAt: item.completedAt || orderDate,
     };
     setStores(prev => prev.map(s => 
       s.id === activeStoreId 
