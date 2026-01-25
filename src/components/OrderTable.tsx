@@ -1,8 +1,15 @@
-import { useState } from 'react';
-import { Plus, Trash2, ImagePlus, TrendingUp, TrendingDown, Download } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { Plus, Trash2, ImagePlus, TrendingUp, TrendingDown, Download, ChevronLeft, ChevronRight } from 'lucide-react';
 import { OrderItem, Settings } from '@/types/inventory';
 import { cn } from '@/lib/utils';
 import { exportOrdersToCSV } from '@/lib/exportUtils';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface OrderTableProps {
   items: OrderItem[];
@@ -22,6 +29,21 @@ const emptyItem = {
   actualPayment: 0,
 };
 
+const months = [
+  { value: '1', label: '1月' },
+  { value: '2', label: '2月' },
+  { value: '3', label: '3月' },
+  { value: '4', label: '4月' },
+  { value: '5', label: '5月' },
+  { value: '6', label: '6月' },
+  { value: '7', label: '7月' },
+  { value: '8', label: '8月' },
+  { value: '9', label: '9月' },
+  { value: '10', label: '10月' },
+  { value: '11', label: '11月' },
+  { value: '12', label: '12月' },
+];
+
 export function OrderTable({
   items,
   settings,
@@ -30,6 +52,10 @@ export function OrderTable({
   onUpdateItem,
   onDeleteItem,
 }: OrderTableProps) {
+  const now = new Date();
+  const [selectedYear, setSelectedYear] = useState(now.getFullYear());
+  const [selectedMonth, setSelectedMonth] = useState(now.getMonth() + 1);
+  
   const [newItem, setNewItem] = useState(emptyItem);
 
   const handleAddItem = () => {
@@ -59,12 +85,51 @@ export function OrderTable({
     }
   };
 
-  const totalProfit = items.reduce((sum, i) => sum + i.profit, 0);
-  const totalRevenue = items.reduce((sum, i) => sum + i.actualPayment, 0);
-  const totalCost = items.reduce((sum, i) => sum + i.convertedWithShipping, 0);
+  // Generate available years from orders
+  const availableYears = useMemo(() => {
+    const years = new Set<number>();
+    years.add(now.getFullYear());
+    items.forEach(item => {
+      if (item.createdAt) {
+        years.add(new Date(item.createdAt).getFullYear());
+      }
+    });
+    return Array.from(years).sort((a, b) => b - a);
+  }, [items]);
+
+  // Filter items by selected month/year
+  const filteredItems = useMemo(() => {
+    return items.filter(item => {
+      if (!item.createdAt) return false;
+      const date = new Date(item.createdAt);
+      return date.getFullYear() === selectedYear && date.getMonth() + 1 === selectedMonth;
+    });
+  }, [items, selectedYear, selectedMonth]);
+
+  const totalProfit = filteredItems.reduce((sum, i) => sum + i.profit, 0);
+  const totalRevenue = filteredItems.reduce((sum, i) => sum + i.actualPayment, 0);
+  const totalCost = filteredItems.reduce((sum, i) => sum + i.convertedWithShipping, 0);
 
   const handleExport = () => {
-    exportOrdersToCSV(items, storeName);
+    exportOrdersToCSV(filteredItems, `${storeName}_${selectedYear}年${selectedMonth}月`);
+  };
+
+  const handlePrevMonth = () => {
+    if (selectedMonth === 1) {
+      setSelectedMonth(12);
+      setSelectedYear(prev => prev - 1);
+    } else {
+      setSelectedMonth(prev => prev - 1);
+    }
+  };
+
+  const handleNextMonth = () => {
+    if (selectedMonth === 12) {
+      setSelectedMonth(1);
+      setSelectedYear(prev => prev + 1);
+    } else {
+      setSelectedMonth(prev => prev + 1);
+    }
   };
 
   return (
@@ -79,10 +144,10 @@ export function OrderTable({
         <div className="flex items-center gap-4">
           <button
             onClick={handleExport}
-            disabled={items.length === 0}
+            disabled={filteredItems.length === 0}
             className={cn(
               "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors",
-              items.length > 0
+              filteredItems.length > 0
                 ? "bg-primary text-primary-foreground hover:bg-primary/90"
                 : "bg-muted text-muted-foreground cursor-not-allowed"
             )}
@@ -94,6 +159,56 @@ export function OrderTable({
             <p>匯率: 1 CNY = {settings.exchangeRate} JPY</p>
             <p>運費込み計算: +¥1,000</p>
           </div>
+        </div>
+      </div>
+
+      {/* Month/Year Selector */}
+      <div className="flex items-center gap-3 p-4 bg-card rounded-xl border border-border">
+        <span className="text-sm font-medium text-muted-foreground">期間選擇:</span>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handlePrevMonth}
+            className="p-2 rounded-lg hover:bg-muted transition-colors"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          
+          <Select value={selectedYear.toString()} onValueChange={(v) => setSelectedYear(parseInt(v))}>
+            <SelectTrigger className="w-24">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="bg-popover">
+              {availableYears.map((year) => (
+                <SelectItem key={year} value={year.toString()}>
+                  {year}年
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={selectedMonth.toString()} onValueChange={(v) => setSelectedMonth(parseInt(v))}>
+            <SelectTrigger className="w-20">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="bg-popover">
+              {months.map((month) => (
+                <SelectItem key={month.value} value={month.value}>
+                  {month.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <button
+            onClick={handleNextMonth}
+            className="p-2 rounded-lg hover:bg-muted transition-colors"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+        
+        <div className="ml-auto text-sm text-muted-foreground">
+          該月訂單數: <span className="font-semibold text-foreground">{filteredItems.length}</span> 件
         </div>
       </div>
 
@@ -214,7 +329,7 @@ export function OrderTable({
             </tr>
 
             {/* Existing Items */}
-            {items.map((item) => (
+            {filteredItems.map((item) => (
               <tr key={item.id} className="table-row-interactive">
                 <td className="table-cell">
                   <label className="w-14 h-14 rounded-lg border border-border flex items-center justify-center cursor-pointer hover:border-primary transition-colors overflow-hidden bg-muted">
@@ -280,10 +395,10 @@ export function OrderTable({
               </tr>
             ))}
 
-            {items.length === 0 && (
+            {filteredItems.length === 0 && (
               <tr>
                 <td colSpan={9} className="table-cell text-center py-12 text-muted-foreground">
-                  まだ注文がありません。上の行から新しい注文を追加してください。
+                  {selectedYear}年{selectedMonth}月 沒有訂單記錄。
                 </td>
               </tr>
             )}
@@ -292,22 +407,22 @@ export function OrderTable({
       </div>
 
       {/* Summary Cards */}
-      {items.length > 0 && (
+      {filteredItems.length > 0 && (
         <div className="grid grid-cols-4 gap-4">
           <div className="stat-card">
-            <p className="text-sm text-muted-foreground mb-1">注文数</p>
-            <p className="text-2xl font-bold">{items.length}</p>
+            <p className="text-sm text-muted-foreground mb-1">{selectedMonth}月 注文数</p>
+            <p className="text-2xl font-bold">{filteredItems.length}</p>
           </div>
           <div className="stat-card">
-            <p className="text-sm text-muted-foreground mb-1">売上合計</p>
+            <p className="text-sm text-muted-foreground mb-1">{selectedMonth}月 売上合計</p>
             <p className="text-2xl font-bold">¥{totalRevenue.toLocaleString()}</p>
           </div>
           <div className="stat-card">
-            <p className="text-sm text-muted-foreground mb-1">原価合計</p>
+            <p className="text-sm text-muted-foreground mb-1">{selectedMonth}月 原価合計</p>
             <p className="text-2xl font-bold">¥{totalCost.toLocaleString()}</p>
           </div>
           <div className="stat-card">
-            <p className="text-sm text-muted-foreground mb-1">利益合計</p>
+            <p className="text-sm text-muted-foreground mb-1">{selectedMonth}月 利益合計</p>
             <p className={cn(
               "text-2xl font-bold",
               totalProfit >= 0 ? "profit-positive" : "profit-negative"
