@@ -56,18 +56,43 @@ export function AddOrderDialog({
   onAddItem,
 }: AddOrderDialogProps) {
   const [newItem, setNewItem] = useState(emptyItem);
+  const [isDragging, setIsDragging] = useState(false);
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
+  const processFile = async (file: File) => {
+    if (file && file.type.startsWith('image/')) {
       const reader = new FileReader();
       reader.onloadend = async () => {
         const base64 = reader.result as string;
-        // Compress image to save storage space
         const compressed = await compressImage(base64, 200, 0.6);
         setNewItem(prev => ({ ...prev, photo: compressed }));
       };
       reader.readAsDataURL(file);
+    }
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      await processFile(file);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      await processFile(file);
     }
   };
 
@@ -112,8 +137,18 @@ export function AddOrderDialog({
         <div className="grid gap-4 py-4">
           {/* Photo Upload */}
           <div className="flex flex-col gap-2">
-            <Label>商品照片</Label>
-            <label className="w-24 h-24 rounded-lg border-2 border-dashed border-primary/40 flex items-center justify-center cursor-pointer hover:border-primary transition-colors overflow-hidden">
+            <Label>商品照片（可拖曳上傳）</Label>
+            <label 
+              className={cn(
+                "w-24 h-24 rounded-lg border-2 border-dashed flex items-center justify-center cursor-pointer transition-colors overflow-hidden",
+                isDragging 
+                  ? "border-primary bg-primary/10" 
+                  : "border-primary/40 hover:border-primary"
+              )}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+            >
               {newItem.photo ? (
                 <img src={newItem.photo} alt="" className="w-full h-full object-cover" />
               ) : (
