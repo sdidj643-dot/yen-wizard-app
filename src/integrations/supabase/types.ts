@@ -14,7 +14,163 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      inventory_items: {
+        Row: {
+          color: string | null
+          cost_price_cny: number
+          created_at: string
+          id: string
+          photo: string | null
+          product_name: string
+          quantity: number
+          selling_price_jpy: number
+          size: string | null
+          store_id: string
+          updated_at: string
+        }
+        Insert: {
+          color?: string | null
+          cost_price_cny?: number
+          created_at?: string
+          id?: string
+          photo?: string | null
+          product_name?: string
+          quantity?: number
+          selling_price_jpy?: number
+          size?: string | null
+          store_id: string
+          updated_at?: string
+        }
+        Update: {
+          color?: string | null
+          cost_price_cny?: number
+          created_at?: string
+          id?: string
+          photo?: string | null
+          product_name?: string
+          quantity?: number
+          selling_price_jpy?: number
+          size?: string | null
+          store_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_items_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      order_items: {
+        Row: {
+          actual_payment: number
+          color: string | null
+          completed_at: string
+          converted_with_shipping: number
+          cost_price_cny: number
+          created_at: string
+          id: string
+          photo: string | null
+          product_name: string
+          profit: number
+          size: string | null
+          store_id: string
+        }
+        Insert: {
+          actual_payment?: number
+          color?: string | null
+          completed_at?: string
+          converted_with_shipping?: number
+          cost_price_cny?: number
+          created_at?: string
+          id?: string
+          photo?: string | null
+          product_name?: string
+          profit?: number
+          size?: string | null
+          store_id: string
+        }
+        Update: {
+          actual_payment?: number
+          color?: string | null
+          completed_at?: string
+          converted_with_shipping?: number
+          cost_price_cny?: number
+          created_at?: string
+          id?: string
+          photo?: string | null
+          product_name?: string
+          profit?: number
+          size?: string | null
+          store_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_items_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      settings: {
+        Row: {
+          created_at: string
+          domestic_shipping: number
+          exchange_rate: number
+          id: string
+          international_shipping: number
+          platform_fee_rate: number
+          target_profit: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          domestic_shipping?: number
+          exchange_rate?: number
+          id?: string
+          international_shipping?: number
+          platform_fee_rate?: number
+          target_profit?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          domestic_shipping?: number
+          exchange_rate?: number
+          id?: string
+          international_shipping?: number
+          platform_fee_rate?: number
+          target_profit?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      stores: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
