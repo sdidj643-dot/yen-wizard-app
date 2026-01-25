@@ -7,6 +7,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { cn } from '@/lib/utils';
 import { exportOrdersToCSV } from '@/lib/exportUtils';
 import { AddOrderDialog } from './AddOrderDialog';
+import { compressImage } from '@/lib/imageUtils';
 import {
   Select,
   SelectContent,
@@ -52,16 +53,18 @@ export function OrderTable({
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth() + 1);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
-  const handleImageUpload = (
+  const handleImageUpload = async (
     e: React.ChangeEvent<HTMLInputElement>,
     itemId: string
   ) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onloadend = () => {
+      reader.onloadend = async () => {
         const base64 = reader.result as string;
-        onUpdateItem(itemId, { photo: base64 });
+        // Compress image to save storage space
+        const compressed = await compressImage(base64, 200, 0.6);
+        onUpdateItem(itemId, { photo: compressed });
       };
       reader.readAsDataURL(file);
     }

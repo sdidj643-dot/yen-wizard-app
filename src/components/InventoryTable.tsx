@@ -3,6 +3,7 @@ import { Plus, Trash2, ImagePlus, Download } from 'lucide-react';
 import { InventoryItem, Settings } from '@/types/inventory';
 import { cn } from '@/lib/utils';
 import { exportInventoryToCSV } from '@/lib/exportUtils';
+import { compressImage } from '@/lib/imageUtils';
 
 interface InventoryTableProps {
   items: InventoryItem[];
@@ -40,7 +41,7 @@ export function InventoryTable({
     }
   };
 
-  const handleImageUpload = (
+  const handleImageUpload = async (
     e: React.ChangeEvent<HTMLInputElement>,
     isNew: boolean,
     itemId?: string
@@ -48,12 +49,14 @@ export function InventoryTable({
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onloadend = () => {
+      reader.onloadend = async () => {
         const base64 = reader.result as string;
+        // Compress image to save storage space
+        const compressed = await compressImage(base64, 200, 0.6);
         if (isNew) {
-          setNewItem(prev => ({ ...prev, photo: base64 }));
+          setNewItem(prev => ({ ...prev, photo: compressed }));
         } else if (itemId) {
-          onUpdateItem(itemId, { photo: base64 });
+          onUpdateItem(itemId, { photo: compressed });
         }
       };
       reader.readAsDataURL(file);
