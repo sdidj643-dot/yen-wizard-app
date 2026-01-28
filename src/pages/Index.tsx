@@ -3,8 +3,11 @@ import { Sidebar } from '@/components/Sidebar';
 import { InventoryTable } from '@/components/InventoryTable';
 import { OrderTable } from '@/components/OrderTable';
 import { SettingsPanel } from '@/components/SettingsPanel';
-import { useStore } from '@/hooks/useStore';
-import { Loader2 } from 'lucide-react';
+import { useSupabaseStore } from '@/hooks/useSupabaseStore';
+import { supabase } from '@/integrations/supabase/client';
+import { Button } from '@/components/ui/button';
+import { Loader2, LogOut } from 'lucide-react';
+import { toast } from 'sonner';
 
 type Tab = 'inventory' | 'orders' | 'settings';
 
@@ -28,7 +31,12 @@ const Index = () => {
     deleteOrderItem,
     updateSettings,
     recalculateAllPrices,
-  } = useStore();
+  } = useSupabaseStore();
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    toast.success('已登出');
+  };
 
   if (isLoading) {
     return (
@@ -58,11 +66,17 @@ const Index = () => {
         <div className="p-8">
           {/* Store Header */}
           {activeStore && (
-            <div className="mb-6">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-                <span>現在の店舗</span>
+            <div className="mb-6 flex items-center justify-between">
+              <div>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+                  <span>現在の店舗</span>
+                </div>
+                <h1 className="text-3xl font-bold text-foreground">{activeStore.name}</h1>
               </div>
-              <h1 className="text-3xl font-bold text-foreground">{activeStore.name}</h1>
+              <Button variant="outline" size="sm" onClick={handleLogout}>
+                <LogOut className="w-4 h-4 mr-2" />
+                登出
+              </Button>
             </div>
           )}
 
