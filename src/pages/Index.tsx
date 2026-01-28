@@ -30,11 +30,6 @@ const Index = () => {
     recalculateAllPrices,
   } = useSupabaseStore();
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    toast.success('已登出');
-  };
-
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
@@ -63,17 +58,11 @@ const Index = () => {
         <div className="p-8">
           {/* Store Header */}
           {activeStore && (
-            <div className="mb-6 flex items-center justify-between">
-              <div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-                  <span>現在の店舗</span>
-                </div>
-                <h1 className="text-3xl font-bold text-foreground">{activeStore.name}</h1>
+            <div className="mb-6">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+                <span>現在の店舗</span>
               </div>
-              <Button variant="outline" size="sm" onClick={handleLogout}>
-                <LogOut className="w-4 h-4 mr-2" />
-                登出
-              </Button>
+              <h1 className="text-3xl font-bold text-foreground">{activeStore.name}</h1>
             </div>
           )}
 
