@@ -4,10 +4,7 @@ import { InventoryTable } from '@/components/InventoryTable';
 import { OrderTable } from '@/components/OrderTable';
 import { SettingsPanel } from '@/components/SettingsPanel';
 import { useSupabaseStore } from '@/hooks/useSupabaseStore';
-import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
-import { Loader2, LogOut } from 'lucide-react';
-import { toast } from 'sonner';
+import { Loader2 } from 'lucide-react';
 
 type Tab = 'inventory' | 'orders' | 'settings';
 
